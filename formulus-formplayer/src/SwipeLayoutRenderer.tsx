@@ -5,6 +5,7 @@ import { useSwipeable } from "react-swipeable";
 import { Button, Box } from "@mui/material";
 import { useFormContext } from "./App";
 import { draftService } from './DraftService';
+import FormProgressBar from './FormProgressBar';
 
 interface SwipeLayoutProps extends ControlProps {
   currentPage: number;
@@ -75,8 +76,16 @@ const SwipeLayoutRenderer = ({
   });
 
   return (
-    <Box sx={{ position: 'relative', height: '100%' }}>
-      <div {...handlers} className="swipelayout_screen">
+    <Box sx={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {isExplicitSwipeLayout && (
+        <FormProgressBar 
+          uischema={uischema}
+          currentPage={currentPage}
+          onPageChange={navigateToPage}
+        />
+      )}
+      
+      <div {...handlers} className="swipelayout_screen" style={{ flex: 1, overflow: 'auto' }}>
         {(uischema as any)?.label && <h1>{(uischema as any).label}</h1>}
         {layouts.length > 0 && (
           <JsonFormsDispatch 
