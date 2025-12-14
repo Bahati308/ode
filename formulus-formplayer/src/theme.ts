@@ -1,5 +1,5 @@
 import { createTheme, ThemeOptions } from '@mui/material/styles';
-import { tokens } from './tokens';
+import { tokens } from './tokens-adapter';
 
 /**
  * Material Design 3 Theme Configuration with ODE Design Tokens
