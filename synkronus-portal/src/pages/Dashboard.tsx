@@ -400,27 +400,64 @@ export function Dashboard() {
     setError(null)
     setSuccess(null)
     try {
+      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/dataexport/parquet', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
       
+      const response = await fetch(`${apiBaseUrl}/dataexport/parquet`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token || ''}`
+        }
+      })
+
       if (!response.ok) {
-        throw new Error('Failed to export data')
+        let errorMessage = `Failed to export data (${response.status})`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.error || errorMessage
+        } catch {
+          errorMessage = response.statusText || errorMessage
+        }
+        throw new Error(errorMessage)
+      }
+
+      // Get the filename from Content-Disposition header, or use default
+      const contentDisposition = response.headers.get('Content-Disposition')
+      let filename = `observations_export_${new Date().toISOString().split('T')[0]}.zip`
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '')
+          // Ensure it has .zip extension
+          if (!filename.endsWith('.zip')) {
+            filename = filename.replace(/\.parquet$/, '') + '.zip'
+          }
+        }
       }
 
       const blob = await response.blob()
+      
+      // Verify it's actually a ZIP file (backend returns application/zip)
+      if (blob.size === 0) {
+        throw new Error('Export file is empty')
+      }
+
+      // Create download link
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `synkronus-export-${new Date().toISOString().split('T')[0]}.parquet`
+      a.download = filename
       document.body.appendChild(a)
       a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-      setSuccess('Data exported successfully!')
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+      }, 100)
+      
+      setSuccess(`Data exported successfully! Downloaded ${filename}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to export data')
     } finally {
@@ -1122,7 +1159,10 @@ export function Dashboard() {
                 <div className="export-icon">📊</div>
                 <div className="export-content">
                   <h3>Export to Parquet</h3>
-                  <p>Download all observation data in Parquet format for analysis in Python, R, or other data science tools.</p>
+                  <p>Download all observation data as a ZIP archive containing Parquet files (one per form type) for analysis in Python, R, or other data science tools.</p>
+                  <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, var(--opacity-60))', marginTop: '8px' }}>
+                    The ZIP file contains separate Parquet files for each form type, making it easy to analyze observations by form.
+                  </p>
                   <button
                     onClick={handleExportData}
                     disabled={loading}
