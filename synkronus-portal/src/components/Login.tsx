@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import odeLogo from '../assets/ode_logo.png'
 import './Login.css'
 
 export function Login() {
@@ -27,7 +28,10 @@ export function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1>Synkronus Portal</h1>
+        <div className="login-logo-section">
+          <img src={odeLogo} alt="ODE Logo" className="login-logo" />
+          <h1>Synkronus Portal</h1>
+        </div>
         <h2>Sign In</h2>
         
         {error && <div className="error-message">{error}</div>}

@@ -4,15 +4,7 @@ import { api } from '../services/api'
 import odeLogo from '../assets/ode_logo.png'
 import './Dashboard.css'
 
-// Get API base URL (same logic as api.ts)
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL
-  }
-  return import.meta.env.DEV ? '/api' : 'http://localhost:8080'
-}
-
-type TabType = 'overview' | 'app-bundles' | 'users' | 'data-export' | 'system'
+type TabType = 'overview' | 'app-bundles' | 'users' | 'observations' | 'data-export' | 'system'
 
 interface AppBundleVersion {
   version: string
@@ -51,8 +43,32 @@ interface SystemInfo {
   build?: {
     commit?: string
     build_time?: string
+    go_version?: string
   }
   version?: string
+  database?: {
+    type?: string
+    version?: string
+    database_name?: string
+  }
+  system?: {
+    os?: string
+    architecture?: string
+    cpus?: number
+  }
+}
+
+interface HealthStatus {
+  status: string
+  timestamp?: string
+  database?: {
+    status: string
+    response_time?: number
+  }
+  api?: {
+    status: string
+    uptime?: number
+  }
 }
 
 export function Dashboard() {
@@ -61,6 +77,7 @@ export function Dashboard() {
   const [appBundles, setAppBundles] = useState<AppBundleVersion[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -79,7 +96,14 @@ export function Dashboard() {
   const [changePasswordForm, setChangePasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [userSearchQuery, setUserSearchQuery] = useState('')
   
+  // Observations state
+  const [observations, setObservations] = useState<any[]>([])
+  const [observationSearchQuery, setObservationSearchQuery] = useState('')
+  const [showObservationModal, setShowObservationModal] = useState(false)
+  const [selectedObservation, setSelectedObservation] = useState<any | null>(null)
+  
   // App bundle modals
+  const [autoActivate, setAutoActivate] = useState(false)
   const [showManifestModal, setShowManifestModal] = useState(false)
   const [showChangesModal, setShowChangesModal] = useState(false)
   const [showSwitchConfirm, setShowSwitchConfirm] = useState<string | null>(null)
@@ -204,10 +228,47 @@ export function Dashboard() {
     setLoading(true)
     setError(null)
     try {
-      const info = await api.get<SystemInfo>('/version')
-      setSystemInfo(info)
+      const [info, healthResponse] = await Promise.all([
+        api.get<SystemInfo>('/version').catch(() => null),
+        fetch(`${import.meta.env.DEV ? '/api' : 'http://localhost:8080'}/health`).catch(() => null)
+      ])
+      if (info) setSystemInfo(info)
+      
+      // Health endpoint returns plain text "OK", so we create a health status object
+      if (healthResponse && healthResponse.ok) {
+        const healthText = await healthResponse.text()
+        setHealthStatus({
+          status: healthText || 'OK',
+          timestamp: new Date().toISOString()
+        })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load system info')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleViewObservation = (observation: any) => {
+    setSelectedObservation(observation)
+    setShowObservationModal(true)
+  }
+
+  const loadObservations = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      // Use sync/pull to get all observations
+      // Generate a temporary client_id for the portal
+      const clientId = `portal-${Date.now()}`
+      const response = await api.post<any>('/sync/pull', {
+        client_id: clientId,
+        since: { version: 0 },
+        limit: 1000
+      })
+      setObservations(response.records || [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load observations')
     } finally {
       setLoading(false)
     }
@@ -222,6 +283,8 @@ export function Dashboard() {
       loadAppBundles()
     } else if (tab === 'users' && users.length === 0) {
       loadUsers()
+    } else if (tab === 'observations' && observations.length === 0) {
+      loadObservations()
     } else if (tab === 'system' && !systemInfo) {
       loadSystemInfo()
     }
@@ -292,7 +355,7 @@ export function Dashboard() {
         xhr.addEventListener('error', () => reject(new Error('Network error: Upload failed')))
         xhr.addEventListener('abort', () => reject(new Error('Upload was cancelled')))
 
-        const apiBaseUrl = getApiBaseUrl()
+        const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
         const uploadUrl = `${apiBaseUrl}/app-bundle/push`
         xhr.open('POST', uploadUrl)
         if (token) {
@@ -309,6 +372,17 @@ export function Dashboard() {
       }
 
       await loadAppBundles()
+      
+      // Auto-activate if enabled
+      if (autoActivate && result.manifest?.version) {
+        try {
+          await api.switchAppBundleVersion(result.manifest.version)
+          setSuccess(`Bundle uploaded and activated! Version: ${result.manifest.version}`)
+          await loadAppBundles()
+        } catch (err) {
+          setError(`Bundle uploaded but failed to activate: ${err instanceof Error ? err.message : 'Unknown error'}`)
+        }
+      }
       
       setTimeout(() => {
         setUploadProgress(0)
@@ -490,6 +564,13 @@ export function Dashboard() {
             </button>
           )}
           <button
+            className={activeTab === 'observations' ? 'active' : ''}
+            onClick={() => handleTabChange('observations')}
+          >
+            <span className="tab-icon">📋</span>
+            <span>Observations</span>
+          </button>
+          <button
             className={activeTab === 'data-export' ? 'active' : ''}
             onClick={() => handleTabChange('data-export')}
           >
@@ -598,6 +679,15 @@ export function Dashboard() {
                           </>
                         )}
                       </button>
+                      <label className="auto-activate-toggle">
+                        <input
+                          type="checkbox"
+                          checked={autoActivate}
+                          onChange={(e) => setAutoActivate(e.target.checked)}
+                          disabled={loading}
+                        />
+                        <span>Auto-activate</span>
+                      </label>
                     </>
                   )}
                   <button onClick={loadAppBundles} disabled={loading} className="refresh-button">
@@ -846,6 +936,182 @@ export function Dashboard() {
             </div>
           )}
 
+          {activeTab === 'observations' && (
+            <div className="observations-section">
+              <div className="section-header">
+                <div className="section-title">
+                  <h2>Observations</h2>
+                  <p className="section-subtitle">View and search all observations</p>
+                </div>
+                <button onClick={loadObservations} disabled={loading} className="refresh-button">
+                  <span>🔄</span>
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {loading && observations.length === 0 ? (
+                <div className="loading-state">
+                  <div className="spinner"></div>
+                  <p>Loading observations...</p>
+                </div>
+              ) : (
+                <div className="observations-table-container">
+                  <div className="search-bar">
+                    <input
+                      type="text"
+                      placeholder="Search by Observation ID, Form Type, Form Version, or Version..."
+                      value={observationSearchQuery}
+                      onChange={(e) => setObservationSearchQuery(e.target.value)}
+                      className="search-input"
+                    />
+                    {observationSearchQuery && (
+                      <button
+                        onClick={() => setObservationSearchQuery('')}
+                        className="clear-search-button"
+                        title="Clear search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {observations.filter((obs) => {
+                    if (!observationSearchQuery) return true
+                    const query = observationSearchQuery.toLowerCase()
+                    return (
+                      obs.observation_id?.toLowerCase().includes(query) ||
+                      obs.form_type?.toLowerCase().includes(query) ||
+                      obs.form_version?.toLowerCase().includes(query) ||
+                      obs.version?.toString().includes(query)
+                    )
+                  }).length > 0 && (
+                    <div className="observations-count">
+                      Showing {observations.filter((obs) => {
+                        if (!observationSearchQuery) return true
+                        const query = observationSearchQuery.toLowerCase()
+                        return (
+                          obs.observation_id?.toLowerCase().includes(query) ||
+                          obs.form_type?.toLowerCase().includes(query) ||
+                          obs.form_version?.toLowerCase().includes(query) ||
+                          obs.version?.toString().includes(query)
+                        )
+                      }).length} of {observations.length} observations
+                    </div>
+                  )}
+
+                  <div className="table-container">
+                    <table className="observations-table">
+                      <thead>
+                        <tr>
+                          <th>Observation ID</th>
+                          <th>Form Type</th>
+                          <th>Form Version</th>
+                          <th>Created At</th>
+                          <th>Updated At</th>
+                          <th>Synced At</th>
+                          <th>Version</th>
+                          <th>Status</th>
+                          <th className="actions-column">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {observations.filter((obs) => {
+                          if (!observationSearchQuery) return true
+                          const query = observationSearchQuery.toLowerCase()
+                          return (
+                            obs.observation_id?.toLowerCase().includes(query) ||
+                            obs.form_type?.toLowerCase().includes(query) ||
+                            obs.form_version?.toLowerCase().includes(query) ||
+                            obs.version?.toString().includes(query)
+                          )
+                        }).map((obs) => (
+                          <tr key={obs.observation_id} className={obs.deleted ? 'deleted' : ''}>
+                            <td>
+                              <code className="observation-id-code" title={obs.observation_id}>
+                                {obs.observation_id}
+                              </code>
+                            </td>
+                            <td style={{ color: 'var(--color-neutral-200)' }}>{obs.form_type}</td>
+                            <td style={{ color: 'var(--color-neutral-200)' }}>{obs.form_version}</td>
+                            <td style={{ color: 'var(--color-neutral-300)', fontSize: '13px' }}>{new Date(obs.created_at).toLocaleString()}</td>
+                            <td style={{ color: 'var(--color-neutral-300)', fontSize: '13px' }}>{new Date(obs.updated_at).toLocaleString()}</td>
+                            <td style={{ color: 'var(--color-neutral-300)', fontSize: '13px' }}>{obs.synced_at ? new Date(obs.synced_at).toLocaleString() : '—'}</td>
+                            <td style={{ color: 'var(--color-neutral-200)', fontFamily: 'monospace' }}>{obs.version}</td>
+                            <td>
+                              {obs.deleted ? (
+                                <span className="status-badge deleted">Deleted</span>
+                              ) : (
+                                <span className="status-badge active">Active</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="table-actions">
+                                <button
+                                  onClick={() => handleViewObservation(obs)}
+                                  className="table-action-btn view-btn"
+                                  title="View Details"
+                                >
+                                  <span>👁️</span>
+                                  <span>View</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {observations.filter((obs) => {
+                    if (!observationSearchQuery) return true
+                    const query = observationSearchQuery.toLowerCase()
+                    return (
+                      obs.observation_id?.toLowerCase().includes(query) ||
+                      obs.form_type?.toLowerCase().includes(query) ||
+                      obs.form_version?.toLowerCase().includes(query) ||
+                      obs.version?.toString().includes(query)
+                    )
+                  }).length === 0 && observationSearchQuery && (
+                    <div className="empty-state" style={{ textAlign: 'center', padding: '40px', marginTop: '24px', backgroundColor: 'var(--color-neutral-700)', borderRadius: '12px' }}>
+                      <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔍</div>
+                      <h3 style={{ color: 'var(--color-neutral-100)', marginBottom: '8px' }}>No observations found</h3>
+                      <p style={{ color: 'var(--color-neutral-300)', marginBottom: '16px' }}>
+                        No observations match your search query: "<strong style={{ color: 'var(--color-neutral-100)' }}>{observationSearchQuery}</strong>"
+                      </p>
+                      <button
+                        onClick={() => setObservationSearchQuery('')}
+                        style={{
+                          marginTop: '16px',
+                          padding: '10px 20px',
+                          backgroundColor: 'rgba(79, 127, 78, var(--opacity-20))',
+                          border: '1px solid rgba(79, 127, 78, var(--opacity-40))',
+                          borderRadius: '8px',
+                          color: 'var(--color-neutral-100)',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(79, 127, 78, var(--opacity-40))'
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = 'rgba(79, 127, 78, var(--opacity-20))'
+                        }}
+                      >
+                        Clear Search
+                      </button>
+                    </div>
+                  )}
+                  {observations.length === 0 && !loading && !observationSearchQuery && (
+                    <div className="empty-state">
+                      <div className="empty-icon">📋</div>
+                      <p>No observations found</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'data-export' && (
             <div className="data-export-section">
               <div className="section-title">
@@ -896,33 +1162,151 @@ export function Dashboard() {
                   <div className="spinner"></div>
                   <p>Loading system information...</p>
                 </div>
-              ) : systemInfo ? (
-                <div className="info-cards">
-                  <div className="info-card">
-                    <div className="info-icon">🔢</div>
-                    <div className="info-content">
-                      <h3>Version</h3>
-                      <p>{systemInfo.server?.version || systemInfo.version || 'N/A'}</p>
+              ) : systemInfo || healthStatus ? (
+                <div>
+                  {healthStatus && (
+                    <div className="health-status-section" style={{ marginBottom: '32px' }}>
+                      <h3 style={{ marginBottom: '16px', color: 'var(--color-neutral-white)', fontSize: '18px', fontWeight: '600' }}>Health Status</h3>
+                      <div className="info-cards">
+                        <div className="info-card">
+                          <div className="info-icon">💚</div>
+                          <div className="info-content">
+                            <h3>Overall Status</h3>
+                            <p style={{ color: healthStatus.status === 'OK' || healthStatus.status === 'ok' ? 'var(--color-semantic-success-500)' : 'var(--color-semantic-error-500)' }}>
+                              {healthStatus.status || 'Unknown'}
+                            </p>
+                          </div>
+                        </div>
+                        {healthStatus.database && (
+                          <div className="info-card">
+                            <div className="info-icon">🗄️</div>
+                            <div className="info-content">
+                              <h3>Database</h3>
+                              <p style={{ color: healthStatus.database.status === 'OK' || healthStatus.database.status === 'ok' ? 'var(--color-semantic-success-500)' : 'var(--color-semantic-error-500)' }}>
+                                {healthStatus.database.status || 'Unknown'}
+                                {healthStatus.database.response_time && ` (${healthStatus.database.response_time}ms)`}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {healthStatus.api && (
+                          <div className="info-card">
+                            <div className="info-icon">🌐</div>
+                            <div className="info-content">
+                              <h3>API</h3>
+                              <p style={{ color: healthStatus.api.status === 'OK' || healthStatus.api.status === 'ok' ? 'var(--color-semantic-success-500)' : 'var(--color-semantic-error-500)' }}>
+                                {healthStatus.api.status || 'Unknown'}
+                                {healthStatus.api.uptime && ` (${Math.floor(healthStatus.api.uptime / 3600)}h)`}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        {healthStatus.timestamp && (
+                          <div className="info-card">
+                            <div className="info-icon">🕒</div>
+                            <div className="info-content">
+                              <h3>Last Check</h3>
+                              <p>{new Date(healthStatus.timestamp).toLocaleString()}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <h3 style={{ marginBottom: '16px', color: 'var(--color-neutral-white)', fontSize: '18px', fontWeight: '600' }}>System Information</h3>
+                    <div className="info-cards">
+                      <div className="info-card">
+                        <div className="info-icon">🔢</div>
+                        <div className="info-content">
+                          <h3>Server Version</h3>
+                          <p>{systemInfo?.server?.version || systemInfo?.version || 'N/A'}</p>
+                        </div>
+                      </div>
+                      {systemInfo?.build?.go_version && (
+                        <div className="info-card">
+                          <div className="info-icon">⚙️</div>
+                          <div className="info-content">
+                            <h3>Go Runtime</h3>
+                            <p>{systemInfo.build.go_version}</p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.system && (
+                        <div className="info-card">
+                          <div className="info-icon">💻</div>
+                          <div className="info-content">
+                            <h3>System</h3>
+                            <p style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                              {systemInfo.system.os || 'N/A'} {systemInfo.system.architecture || ''}
+                              {systemInfo.system.cpus && ` • ${systemInfo.system.cpus} CPUs`}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.database?.database_name && (
+                        <div className="info-card">
+                          <div className="info-icon">📊</div>
+                          <div className="info-content">
+                            <h3>Database Name</h3>
+                            <p>{systemInfo.database.database_name}</p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.database?.type && (
+                        <div className="info-card">
+                          <div className="info-icon">🗄️</div>
+                          <div className="info-content">
+                            <h3>Database Type</h3>
+                            <p>{systemInfo.database.type}</p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.database?.version && (
+                        <div className="info-card">
+                          <div className="info-icon">🗄️</div>
+                          <div className="info-content">
+                            <h3>Database Version</h3>
+                            <p style={{ fontSize: '13px', lineHeight: '1.4' }}>{systemInfo.database.version}</p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.build?.build_time && (
+                        <div className="info-card">
+                          <div className="info-icon">🕒</div>
+                          <div className="info-content">
+                            <h3>Build Time</h3>
+                            <p>{new Date(systemInfo.build.build_time).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      )}
+                      {systemInfo?.build?.commit && (
+                        <div className="info-card">
+                          <div className="info-icon">🔗</div>
+                          <div className="info-content">
+                            <h3>Git Commit</h3>
+                            <p className="commit-hash">{systemInfo.build.commit}</p>
+                          </div>
+                        </div>
+                      )}
+                      <div className="info-card">
+                        <div className="info-icon">🌐</div>
+                        <div className="info-content">
+                          <h3>API Endpoint</h3>
+                          <p style={{ fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                            {import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="info-card">
+                        <div className="info-icon">📅</div>
+                        <div className="info-content">
+                          <h3>Current Time</h3>
+                          <p>{new Date().toLocaleString()}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  {systemInfo.build?.build_time && (
-                    <div className="info-card">
-                      <div className="info-icon">🕒</div>
-                      <div className="info-content">
-                        <h3>Build Time</h3>
-                        <p>{new Date(systemInfo.build.build_time).toLocaleString()}</p>
-                      </div>
-                    </div>
-                  )}
-                  {systemInfo.build?.commit && (
-                    <div className="info-card">
-                      <div className="info-icon">🔗</div>
-                      <div className="info-content">
-                        <h3>Git Commit</h3>
-                        <p className="commit-hash">{systemInfo.build.commit}</p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="empty-state">
@@ -1207,6 +1591,101 @@ export function Dashboard() {
             </div>
             <div className="modal-actions">
               <button type="button" onClick={() => setShowManifestModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Observation View Modal */}
+      {showObservationModal && selectedObservation && (
+        <div className="modal-overlay" onClick={() => setShowObservationModal(false)}>
+          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Observation Details</h2>
+              <button className="modal-close" onClick={() => setShowObservationModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="observation-details">
+                <div className="info-row">
+                  <strong>Observation ID:</strong>
+                  <code className="observation-id-code" style={{ display: 'block', marginTop: '8px' }}>
+                    {selectedObservation.observation_id}
+                  </code>
+                </div>
+                <div className="info-row">
+                  <strong>Form Type:</strong>
+                  <span>{selectedObservation.form_type || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Form Version:</strong>
+                  <span>{selectedObservation.form_version || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Version:</strong>
+                  <span style={{ fontFamily: 'monospace' }}>{selectedObservation.version || 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Status:</strong>
+                  <span>
+                    {selectedObservation.deleted ? (
+                      <span className="status-badge deleted">Deleted</span>
+                    ) : (
+                      <span className="status-badge active">Active</span>
+                    )}
+                  </span>
+                </div>
+                <div className="info-row">
+                  <strong>Created At:</strong>
+                  <span>{selectedObservation.created_at ? new Date(selectedObservation.created_at).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Updated At:</strong>
+                  <span>{selectedObservation.updated_at ? new Date(selectedObservation.updated_at).toLocaleString() : 'N/A'}</span>
+                </div>
+                <div className="info-row">
+                  <strong>Synced At:</strong>
+                  <span>{selectedObservation.synced_at ? new Date(selectedObservation.synced_at).toLocaleString() : 'Not synced'}</span>
+                </div>
+                {selectedObservation.geolocation && (
+                  <div className="info-row">
+                    <strong>Geolocation:</strong>
+                    <div style={{ marginTop: '8px' }}>
+                      <div>Latitude: {selectedObservation.geolocation.latitude}</div>
+                      <div>Longitude: {selectedObservation.geolocation.longitude}</div>
+                      {selectedObservation.geolocation.accuracy && (
+                        <div>Accuracy: {selectedObservation.geolocation.accuracy}m</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {selectedObservation.data && (
+                  <div className="info-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <strong style={{ marginBottom: '8px' }}>Data:</strong>
+                    <pre style={{
+                      background: 'rgba(0, 0, 0, var(--opacity-30))',
+                      padding: '16px',
+                      borderRadius: '8px',
+                      overflow: 'auto',
+                      maxHeight: '400px',
+                      width: '100%',
+                      fontSize: '13px',
+                      color: 'var(--color-neutral-200)',
+                      fontFamily: 'monospace',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}>
+                      {typeof selectedObservation.data === 'string' 
+                        ? selectedObservation.data 
+                        : JSON.stringify(selectedObservation.data, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" onClick={() => setShowObservationModal(false)}>
                 Close
               </button>
             </div>

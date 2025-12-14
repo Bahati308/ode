@@ -89,11 +89,17 @@ services:
       - synkronus-network
 
 # Named volumes for data persistence
+# These volumes persist even when containers are stopped or removed
+# They are only deleted if you explicitly use: docker compose down -v
 volumes:
   postgres-data:
     driver: local
+    # This volume stores all PostgreSQL database data
+    # It persists across container restarts and mode switches
   app-bundles:
     driver: local
+    # This volume stores uploaded app bundle ZIP files
+    # It persists across container restarts and mode switches
 
 # Network for service communication
 networks:
