@@ -3,8 +3,6 @@ android
 ios
 coverage
 build
-*.log
 **/generated/**
-scripts/tsconfig.json
 
 

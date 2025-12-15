@@ -46,6 +46,31 @@ We believe that diverse perspectives and varied skill sets make our project stro
 - Test the platform and report your experience
 - Share how you're using ODE in your work
 
+## Code formatting & linting
+
+Both the React Native app (`formulus`) and the React web app (`formulus-formplayer`) use **Prettier** for formatting and **ESLint** for linting.
+
+- **Formulus (React Native)**:
+  - **Format (write)**: `cd formulus && npm run format`
+  - **Format (check only)**: `cd formulus && npm run format:check`
+  - **Lint**: `cd formulus && npm run lint`
+  - **Lint (auto-fix)**: `cd formulus && npm run lint:fix`
+
+- **Formulus Formplayer (React Web)**:
+  - **Format (write)**: `cd formulus-formplayer && npm run format`
+  - **Format (check only)**: `cd formulus-formplayer && npm run format:check`
+  - **Lint**: `cd formulus-formplayer && npm run lint`
+  - **Lint (auto-fix)**: `cd formulus-formplayer && npm run lint:fix`
+
+In CI for both apps:
+
+- Dependencies are installed with `npm ci`.
+- **Formatting check** (`npm run format:check`) runs after install.
+- **Lint** (`npm run lint`) runs after the formatting check.
+- Tests and builds then run as before.
+
+CI will **fail** if either formatting or linting fails for the touched project.
+
 ## CI/CD Pipeline 🚀
 
 This monorepo uses GitHub Actions for continuous integration and deployment:
