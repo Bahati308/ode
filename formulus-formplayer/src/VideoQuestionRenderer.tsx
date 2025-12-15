@@ -9,7 +9,6 @@ import {
   CardContent,
   Chip,
   Alert,
-  CircularProgress,
   Grid,
   Divider,
 } from '@mui/material';
@@ -45,7 +44,7 @@ interface VideoDisplayData {
 }
 
 const VideoQuestionRenderer: React.FC<VideoQuestionRendererProps> = (props) => {
-  const { data, handleChange, path, errors, schema, uischema, enabled } = props;
+  const { data, handleChange, path, errors, schema, enabled } = props;
 
   const [videoData, setVideoData] = useState<VideoDisplayData | null>(null);
   const [error, setError] = useState<string | null>(null);
