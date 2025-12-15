@@ -40,13 +40,23 @@
     "clean-rn-assets": "powershell -NoProfile -Command \"Remove-Item -Path '../formulus/android/app/src/main/assets/formplayer_dist' -Recurse -Force -ErrorAction SilentlyContinue; mkdir -Force -Path '../formulus/android/app/src/main/assets/formplayer_dist'\"",
     "copy-to-rn": "npm run clean-rn-assets && powershell -NoProfile -Command \"Copy-Item -Path './build/*' -Destination '../formulus/android/app/src/main/assets/formplayer_dist' -Recurse -Force\"",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext js,jsx,ts,tsx",
+    "lint:fix": "eslint src --ext js,jsx,ts,tsx --fix",
+    "format": "prettier \"src/**/*.{js,jsx,ts,tsx,json,css,md}\" --write",
+    "format:check": "prettier \"src/**/*.{js,jsx,ts,tsx,json,css,md}\" --check"
   },
   "eslintConfig": {
     "extends": [
       "react-app",
-      "react-app/jest"
+      "react-app/jest",
+      "prettier"
     ]
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "2.8.8"
   },
   "browserslist": {
     "production": [
