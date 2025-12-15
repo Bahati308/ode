@@ -98,6 +98,61 @@ In the project directory, you can run:
 
 The build is minified and the filenames include the hashes.
 
+### Code Quality Scripts
+
+- `npm run lint` - Check for linting errors
+- `npm run lint:fix` - Automatically fix linting errors where possible
+- `npm run format` - Format all code using Prettier
+- `npm run format:check` - Check if code is properly formatted
+
+# Code Quality & Formatting
+
+This project uses **Prettier** for code formatting and **ESLint** for linting to ensure consistent code quality.
+
+## Local Development
+
+### Formatting
+
+Check if code is properly formatted:
+```bash
+npm run format:check
+```
+
+Format all code automatically:
+```bash
+npm run format
+```
+
+### Linting
+
+Check for linting errors:
+```bash
+npm run lint
+```
+
+Automatically fix linting errors where possible:
+```bash
+npm run lint:fix
+```
+
+## CI Enforcement
+
+The CI pipeline automatically runs:
+1. **Format check** - Verifies all code is properly formatted
+2. **Lint check** - Verifies code passes all ESLint rules
+
+Both checks must pass before tests and builds run. If either check fails, the CI will fail and you'll need to fix the issues locally before merging.
+
+## Recommended Workflow
+
+Before committing, run:
+```bash
+npm run format
+npm run lint:fix
+```
+
+This ensures your code is properly formatted and passes all linting rules.
+
 ```mermaid
 flowchart LR
   %% Main RN app container

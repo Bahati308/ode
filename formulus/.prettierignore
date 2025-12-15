@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+android/
+ios/
+build/
+dist/
+
+# Generated files
+src/api/synkronus/generated/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Metro
+.metro/
+
+# Coverage
+coverage/
+
