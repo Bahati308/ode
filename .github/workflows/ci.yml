@@ -116,6 +116,12 @@ jobs:
           cache: 'npm'
           cache-dependency-path: formulus-formplayer/package-lock.json
       
+      - name: Install and build @ode/tokens
+        run: |
+          cd packages/tokens
+          npm install
+          npm run build
+      
       - name: Install dependencies
         run: npm ci
       
