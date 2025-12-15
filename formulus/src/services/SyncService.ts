@@ -4,9 +4,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SyncProgress} from '../contexts/SyncContext';
 import {notificationService} from './NotificationService';
 import {FormService} from './FormService';
-import {appVersionService} from './AppVersionService';
-
-type SyncProgressCallback = (progress: number) => void;
 type SyncStatusCallback = (status: string) => void;
 type SyncProgressDetailCallback = (progress: SyncProgress) => void;
 

@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   Dimensions,
   StatusBar,
 } from 'react-native';
@@ -15,9 +14,7 @@ import {
   useCodeScanner,
   useCameraPermission,
 } from 'react-native-vision-camera';
-import {appEvents} from '../webview/FormulusMessageHandlers';
-
-const {width, height} = Dimensions.get('window');
+const {width} = Dimensions.get('window');
 
 interface QRScannerModalProps {
   visible: boolean;

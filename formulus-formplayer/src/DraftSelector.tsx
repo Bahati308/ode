@@ -68,7 +68,9 @@ export const DraftSelector: React.FC<DraftSelectorProps> = ({
     const oldDraftCount = draftService.getOldDraftCount();
     if (oldDraftCount > 0) {
       setCleanupMessage(
-        `${oldDraftCount} draft${oldDraftCount === 1 ? '' : 's'} older than 7 days will be automatically removed.`,
+        `${oldDraftCount} draft${
+          oldDraftCount === 1 ? '' : 's'
+        } older than 7 days will be automatically removed.`,
       );
     }
   }, [formType, formVersion]);
@@ -179,8 +181,8 @@ export const DraftSelector: React.FC<DraftSelectorProps> = ({
                               getDraftAge(draft.updatedAt) === 'recent'
                                 ? 'success'
                                 : getDraftAge(draft.updatedAt) === 'old'
-                                  ? 'warning'
-                                  : 'error'
+                                ? 'warning'
+                                : 'error'
                             }
                             sx={{ ml: 1 }}
                           />

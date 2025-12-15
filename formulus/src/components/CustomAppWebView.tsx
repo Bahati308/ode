@@ -6,12 +6,8 @@ import React, {
   useImperativeHandle,
   useMemo,
 } from 'react';
-import {StyleSheet, View, ActivityIndicator, AppState} from 'react-native';
-import {
-  WebView,
-  WebViewMessageEvent,
-  WebViewNavigation,
-} from 'react-native-webview';
+import {View, ActivityIndicator, AppState} from 'react-native';
+import {WebView} from 'react-native-webview';
 import {useIsFocused} from '@react-navigation/native';
 import {Platform} from 'react-native';
 import {readFileAssets} from 'react-native-fs';

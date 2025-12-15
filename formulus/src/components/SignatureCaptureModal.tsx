@@ -24,7 +24,7 @@ const SignatureCaptureModal: React.FC<SignatureCaptureModalProps> = ({
   onSignatureCapture,
   fieldId,
 }) => {
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [_isCapturing, setIsCapturing] = useState(false);
   const signatureRef = useRef<SignatureViewRef>(null);
   const {width, height} = Dimensions.get('window');
 

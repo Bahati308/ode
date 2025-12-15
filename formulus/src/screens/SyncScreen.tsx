@@ -20,14 +20,14 @@ import {getUserInfo} from '../api/synkronus/Auth';
 import colors from '../theme/colors';
 
 const SyncScreen = () => {
+  const syncContextValue = useSyncContext();
   const {
     syncState,
     startSync,
-    updateProgress,
     finishSync,
     cancelSync,
     clearError,
-  } = useSyncContext();
+  } = syncContextValue;
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
   const [pendingUploads, setPendingUploads] = useState<{

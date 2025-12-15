@@ -12,25 +12,27 @@ import {FormInitData} from './FormulusInterfaceDefinition';
 
 // Add NodeJS type definitions
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
+   
   namespace NodeJS {
     interface Timeout {}
   }
 }
 
-interface PendingRequest {
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
-  timeout: NodeJS.Timeout;
-}
+// Unused interfaces removed
+// interface PendingRequest {
+//   resolve: (value: any) => void;
+//   reject: (reason?: any) => void;
+//   timeout: NodeJS.Timeout;
+// }
 
-interface MessageHandlerContext {
-  data: any; // This is now the payload part of the message (message content excluding type and messageId)
-  webViewRef: React.RefObject<WebView | null>;
-  event: WebViewMessageEvent; // Original WebView event
-  type: string; // Original message type from the WebView message
-  messageId?: string; // Original messageId from the WebView message, if present
-}
+// Unused interface - kept for potential future use
+// interface MessageHandlerContext {
+//   data: any; // This is now the payload part of the message (message content excluding type and messageId)
+//   webViewRef: React.RefObject<WebView | null>;
+//   event: WebViewMessageEvent; // Original WebView event
+//   type: string; // Original message type from the WebView message
+//   messageId?: string; // Original messageId from the WebView message, if present
+// }
 
 /**
  * FormulusWebViewMessageManager class
@@ -105,7 +107,7 @@ export class FormulusWebViewMessageManager {
     }
   }
 
-  private sendToWebViewInternal<T = void>(
+  private sendToWebViewInternal(
     callbackName: string,
     data: any = {},
     requestId: string,

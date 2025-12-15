@@ -35,6 +35,7 @@ const ObservationDetailScreen: React.FC<ObservationDetailScreenProps> = ({
 
   useEffect(() => {
     loadObservation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [observationId]);
 
   const loadObservation = async () => {

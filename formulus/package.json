@@ -5,8 +5,8 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint . --max-warnings 9999",
+    "lint:fix": "eslint . --fix --max-warnings 9999",
     "format": "prettier \"**/*.{js,jsx,ts,tsx,json,md}\" --write",
     "format:check": "prettier \"**/*.{js,jsx,ts,tsx,json,md}\" --check",
     "start": "react-native start",

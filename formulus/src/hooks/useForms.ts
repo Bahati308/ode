@@ -1,6 +1,5 @@
 import {useState, useEffect, useCallback} from 'react';
 import {FormService, FormSpec} from '../services/FormService';
-import {Observation} from '../database/models/Observation';
 
 interface UseFormsResult {
   forms: FormSpec[];

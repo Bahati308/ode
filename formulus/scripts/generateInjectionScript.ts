@@ -2,11 +2,7 @@
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-  FormInfo,
-  FormObservation,
-  AttachmentData,
-} from '../src/webview/FormulusInterfaceDefinition';
+// Types are only used in JSDoc comments, not imported
 
 // Core type definitions
 interface JSDocTag {
@@ -158,9 +154,6 @@ function generateInjectionScript(interfaceFilePath: string): string {
 
       // Special handling for methods that return values
       const isVoidReturn = method.returnType === 'void';
-      const callbackName = `__formulus_cb_${Date.now()}_${Math.floor(
-        Math.random() * 1000,
-      )}`;
 
       // Add JSDoc comments
       let jsDoc = method.doc;

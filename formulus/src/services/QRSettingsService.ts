@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
-import {decodeFRMLS, FRMLS} from '../utils/FRMLSHelpers';
+import {decodeFRMLS} from '../utils/FRMLSHelpers';
 
 export interface SettingsUpdate {
   serverUrl: string;

@@ -6,7 +6,6 @@ import {
   NewObservationInput,
   UpdateObservationInput,
 } from '../models/Observation';
-import {nullValue} from '@nozbe/watermelondb/RawRecord';
 import {ObservationMapper} from '../../mappers/ObservationMapper';
 import {geolocationService} from '../../services/GeolocationService';
 import {ToastService} from '../../services/ToastService';

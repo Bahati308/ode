@@ -2,7 +2,6 @@
 This is where the actual implementation of the methods happens on the React Native side. 
 It handles the messages received from the WebView and executes the corresponding native functionality.
 */
-import {PermissionsAndroid, Platform} from 'react-native';
 import {GeolocationService} from '../services/GeolocationService';
 import {WebViewMessageEvent, WebView} from 'react-native-webview';
 import RNFS from 'react-native-fs';
@@ -241,31 +240,29 @@ const saveFormData = async (
   }
 };
 
-// Helper function to load form data from storage
-const loadFormData = async (formType: string) => {
-  try {
-    const filePath = `${RNFS.DocumentDirectoryPath}/form_data/${formType}_partial.json`;
-    const exists = await RNFS.exists(filePath);
-    if (!exists) {
-      return null;
-    }
-
-    const data = await RNFS.readFile(filePath, 'utf8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error loading form data:', error);
-    return null;
-  }
-};
+// Helper function to load form data from storage (currently unused)
+// const loadFormData = async (formType: string) => {
+//   try {
+//     const filePath = `${RNFS.DocumentDirectoryPath}/form_data/${formType}_partial.json`;
+//     const exists = await RNFS.exists(filePath);
+//     if (!exists) {
+//       return null;
+//     }
+//
+//     const data = await RNFS.readFile(filePath, 'utf8');
+//     return JSON.parse(data);
+//   } catch (error) {
+//     console.error('Error loading form data:', error);
+//     return null;
+//   }
+// };
 
 import {FormulusMessageHandlers} from './FormulusMessageHandlers.types';
 import {
   FormInitData,
-  FormulusInterface,
   FormCompletionResult,
 } from './FormulusInterfaceDefinition';
 import {FormService} from '../services/FormService';
-import {FormObservationRepository} from '../database/FormObservationRepository';
 import {Observation} from '../database/models/Observation';
 
 export function createFormulusMessageHandlers(): FormulusMessageHandlers {
@@ -323,7 +320,7 @@ export function createFormulusMessageHandlers(): FormulusMessageHandlers {
     onRequestCamera: async (fieldId: string): Promise<any> => {
       console.log('Request camera handler called', fieldId);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         try {
           // Import react-native-image-picker directly
           const ImagePicker = require('react-native-image-picker');
@@ -542,7 +539,7 @@ export function createFormulusMessageHandlers(): FormulusMessageHandlers {
     onRequestQrcode: async (fieldId: string): Promise<any> => {
       console.log('Request QR code handler called', fieldId);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         try {
           // Emit event to open QR scanner modal
           appEvents.emit('openQRScanner', {
@@ -567,7 +564,7 @@ export function createFormulusMessageHandlers(): FormulusMessageHandlers {
     onRequestSignature: async (fieldId: string): Promise<any> => {
       console.log('Request signature handler called', fieldId);
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve, _reject) => {
         try {
           // Emit event to open signature capture modal
           appEvents.emit('openSignatureCapture', {

@@ -59,11 +59,11 @@ const FormplayerModal = forwardRef<FormplayerModalHandle, FormplayerModalProps>(
     const [currentObservationId, setCurrentObservationId] = useState<
       string | null
     >(null);
-    const [currentObservationData, setCurrentObservationData] = useState<Record<
+    const [_currentObservationData, _setCurrentObservationData] = useState<Record<
       string,
       any
     > | null>(null);
-    const [currentParams, setCurrentParams] = useState<Record<
+    const [_currentParams, _setCurrentParams] = useState<Record<
       string,
       any
     > | null>(null);
@@ -188,12 +188,6 @@ const FormplayerModal = forwardRef<FormplayerModalHandle, FormplayerModalProps>(
         }
       };
     }, []);
-
-    // Handle WebView errors
-    const handleError = (syntheticEvent: any) => {
-      const {nativeEvent} = syntheticEvent;
-      console.error('WebView error:', nativeEvent);
-    };
 
     // Handle WebView load complete
     const handleWebViewLoad = () => {

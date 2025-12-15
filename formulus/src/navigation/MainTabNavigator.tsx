@@ -69,8 +69,8 @@ const MainTabNavigator: React.FC = () => {
             <Icon name="menu" size={size} color={color} />
           ),
         }}
-        listeners={({navigation, route}) => ({
-          tabPress: e => {
+        listeners={({navigation, _route}) => ({
+          tabPress: _e => {
             const state = navigation.getState();
             const currentRoute = state.routes[state.index];
             if (currentRoute?.name === 'More') {

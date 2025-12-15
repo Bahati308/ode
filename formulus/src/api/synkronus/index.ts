@@ -2,8 +2,6 @@ import {
   Configuration,
   DefaultApi,
   AppBundleManifest,
-  AppBundleFile,
-  Observation as ApiObservation,
 } from './generated';
 import {Observation} from '../../database/models/Observation';
 import {ObservationMapper} from '../../mappers/ObservationMapper';
@@ -12,7 +10,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {getApiAuthToken} from './Auth';
 import {databaseService} from '../../database/DatabaseService';
 import randomId from '@nozbe/watermelondb/utils/common/randomId';
-import {Buffer} from 'buffer';
 import {clientIdService} from '../../services/ClientIdService';
 
 interface DownloadResult {
@@ -116,7 +113,7 @@ class SynkronusApi {
     );
     const urls = filesToDownload.map(
       file =>
-        `${api['basePath']}/app-bundle/download/${encodeURIComponent(
+        `${api.basePath}/app-bundle/download/${encodeURIComponent(
           file.path,
         )}`,
     );
@@ -308,7 +305,7 @@ class SynkronusApi {
   private extractAttachmentPaths(data: any, attachmentPaths: string[]): void {
     if (!data || typeof data !== 'object') return;
 
-    for (const [key, value] of Object.entries(data)) {
+    for (const [_key, value] of Object.entries(data)) {
       if (typeof value === 'string') {
         // Check if this looks like an attachment path (GUID-style filename)
         // Based on PhotoQuestionRenderer pattern: GUID-style filenames
@@ -446,7 +443,7 @@ class SynkronusApi {
     const authToken =
       this.fastGetToken_cachedToken ?? (await this.fastGetToken());
     const downloadHeaders: {[key: string]: string} = {};
-    downloadHeaders['Authorization'] = `Bearer ${authToken}`;
+    downloadHeaders.Authorization = `Bearer ${authToken}`;
 
     console.debug(`Downloading from: ${url}`);
     const result = await RNFS.downloadFile({
@@ -499,7 +496,7 @@ class SynkronusApi {
     const api = await this.getApi();
     const urls = attachments.map(
       attachment =>
-        `${api['basePath']}/attachments/${encodeURIComponent(attachment)}`,
+        `${api.basePath}/attachments/${encodeURIComponent(attachment)}`,
     );
     const localFilePaths = attachments.map(
       attachment => `${downloadDirectory}/${attachment}`,
@@ -568,7 +565,7 @@ class SynkronusApi {
         console.debug(
           `Uploading attachment: ${attachmentId} (${fileStats.size} bytes)`,
         );
-        const uploadResponse = await api.uploadAttachment({attachmentId, file});
+        await api.uploadAttachment({attachmentId, file});
 
         // Remove file from pending_upload directory (upload complete)
         // Note: File already exists in main attachments directory from when it was first saved
