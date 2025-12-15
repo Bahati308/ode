@@ -21,13 +21,8 @@ import colors from '../theme/colors';
 
 const SyncScreen = () => {
   const syncContextValue = useSyncContext();
-  const {
-    syncState,
-    startSync,
-    finishSync,
-    cancelSync,
-    clearError,
-  } = syncContextValue;
+  const {syncState, startSync, finishSync, cancelSync, clearError} =
+    syncContextValue;
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
   const [pendingUploads, setPendingUploads] = useState<{

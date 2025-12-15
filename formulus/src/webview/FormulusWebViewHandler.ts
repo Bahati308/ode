@@ -12,7 +12,6 @@ import {FormInitData} from './FormulusInterfaceDefinition';
 
 // Add NodeJS type definitions
 declare global {
-   
   namespace NodeJS {
     interface Timeout {}
   }

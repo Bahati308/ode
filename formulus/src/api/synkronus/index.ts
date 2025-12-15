@@ -1,8 +1,4 @@
-import {
-  Configuration,
-  DefaultApi,
-  AppBundleManifest,
-} from './generated';
+import {Configuration, DefaultApi, AppBundleManifest} from './generated';
 import {Observation} from '../../database/models/Observation';
 import {ObservationMapper} from '../../mappers/ObservationMapper';
 import RNFS from 'react-native-fs';
@@ -113,9 +109,7 @@ class SynkronusApi {
     );
     const urls = filesToDownload.map(
       file =>
-        `${api.basePath}/app-bundle/download/${encodeURIComponent(
-          file.path,
-        )}`,
+        `${api.basePath}/app-bundle/download/${encodeURIComponent(file.path)}`,
     );
     const localFiles = filesToDownload.map(
       file => `${outputRootDirectory}/${file.path}`,

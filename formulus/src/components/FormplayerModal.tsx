@@ -59,10 +59,8 @@ const FormplayerModal = forwardRef<FormplayerModalHandle, FormplayerModalProps>(
     const [currentObservationId, setCurrentObservationId] = useState<
       string | null
     >(null);
-    const [_currentObservationData, _setCurrentObservationData] = useState<Record<
-      string,
-      any
-    > | null>(null);
+    const [_currentObservationData, _setCurrentObservationData] =
+      useState<Record<string, any> | null>(null);
     const [_currentParams, _setCurrentParams] = useState<Record<
       string,
       any
