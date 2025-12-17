@@ -1,4 +1,4 @@
-import React, {useState, useMemo, useCallback} from 'react';
+import React, {useState, useMemo} from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
   Alert,
   TouchableOpacity,
   TextInput,
-  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useObservations} from '../hooks/useObservations';
@@ -36,6 +35,7 @@ type ObservationsScreenNavigationProp = StackNavigationProp<
 
 const ObservationsScreen: React.FC = () => {
   const navigation = useNavigation<ObservationsScreenNavigationProp>();
+  const observationsHook = useObservations();
   const {
     filteredAndSorted,
     loading,
@@ -43,9 +43,7 @@ const ObservationsScreen: React.FC = () => {
     refresh,
     searchQuery,
     setSearchQuery,
-    sortOption,
-    setSortOption,
-  } = useObservations();
+  } = observationsHook;
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [formNames, setFormNames] = useState<Record<string, string>>({});
   const [formTypes, setFormTypes] = useState<{id: string; name: string}[]>([]);
