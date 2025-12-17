@@ -29,8 +29,9 @@ RUN echo 'server { \
     server_name localhost; \
     root /usr/share/nginx/html; \
     index index.html; \
-    # Resolver for dynamic upstream resolution (Docker internal DNS) \
-    resolver 127.0.0.11 valid=30s; \
+    # Resolver for dynamic upstream resolution \
+    # Try Docker internal DNS first, then fall back to public DNS for external domains \
+    resolver 127.0.0.11 8.8.8.8 1.1.1.1 valid=30s ipv6=off; \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
