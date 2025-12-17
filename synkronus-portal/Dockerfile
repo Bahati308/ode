@@ -25,12 +25,12 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx configuration for SPA routing
 # Use resolver with variables to resolve upstream at request time (not startup)
 RUN echo 'server { \
-    listen 80; \
-    server_name localhost; \
+    listen 0.0.0.0:80; \
+    listen [::]:80; \
+    server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
     # Resolver for dynamic upstream resolution \
-    # Try Docker internal DNS first, then fall back to public DNS for external domains \
     resolver 127.0.0.11 8.8.8.8 1.1.1.1 valid=30s ipv6=off; \
     location / { \
         try_files $uri $uri/ /index.html; \
