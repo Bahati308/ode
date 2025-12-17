@@ -58,6 +58,7 @@ const FormManagementScreen = () => {
     if (formService) {
       loadData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formService]);
 
   // Function to load form types and observations
