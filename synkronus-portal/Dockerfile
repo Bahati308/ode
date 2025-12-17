@@ -23,24 +23,19 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy custom nginx configuration for SPA routing
-# Use resolver with variables to resolve upstream at request time (not startup)
 RUN echo 'server { \
     listen 0.0.0.0:80; \
     listen [::]:80; \
     server_name _; \
     root /usr/share/nginx/html; \
     index index.html; \
-    # Resolver for dynamic upstream resolution \
-    resolver 127.0.0.11 8.8.8.8 1.1.1.1 valid=30s ipv6=off; \
     location / { \
         try_files $uri $uri/ /index.html; \
     } \
     # Proxy API requests to backend \
     location /api { \
         rewrite ^/api(.*)$ $1 break; \
-        # Use variable for proxy_pass to enable runtime DNS resolution \
-        set $backend "http://demo.synkronus.cloud"; \
-        proxy_pass $backend; \
+        proxy_pass http://demo.synkronus.cloud; \
         proxy_http_version 1.1; \
         proxy_set_header Upgrade $http_upgrade; \
         proxy_set_header Connection "upgrade"; \
