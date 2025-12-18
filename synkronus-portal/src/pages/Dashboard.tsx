@@ -848,7 +848,7 @@ export function Dashboard() {
                   <p className="section-subtitle">Manage system users and permissions</p>
                 </div>
                 <div className="section-actions">
-                  <button onClick={() => setShowCreateUserModal(true)} disabled={loading} className="create-button">
+                  <button onClick={handleOpenCreateUserModal} disabled={loading} className="create-button">
                     <span>➕</span>
                     <span>Create User</span>
                   </button>
@@ -988,7 +988,7 @@ export function Dashboard() {
                   <h2>My Account</h2>
                   <p className="section-subtitle">Manage your account settings</p>
                 </div>
-                <button onClick={() => setShowChangePasswordModal(true)} className="change-password-button">
+                <button onClick={handleOpenChangePasswordModal} className="change-password-button">
                   <span>🔑</span>
                   <span>Change Password</span>
                 </button>
