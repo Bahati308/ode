@@ -230,7 +230,7 @@ export function Dashboard() {
     try {
       const [info, healthResponse] = await Promise.all([
         api.get<SystemInfo>('/version').catch(() => null),
-        fetch(`${import.meta.env.DEV ? '/api' : 'http://localhost:8080'}/health`).catch(() => null)
+        fetch(`${import.meta.env.VITE_API_URL || '/api'}/health`).catch(() => null)
       ])
       if (info) setSystemInfo(info)
       
@@ -355,7 +355,7 @@ export function Dashboard() {
         xhr.addEventListener('error', () => reject(new Error('Network error: Upload failed')))
         xhr.addEventListener('abort', () => reject(new Error('Upload was cancelled')))
 
-        const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
+        const apiBaseUrl = import.meta.env.VITE_API_URL || '/api'
         const uploadUrl = `${apiBaseUrl}/app-bundle/push`
         xhr.open('POST', uploadUrl)
         if (token) {
@@ -400,7 +400,7 @@ export function Dashboard() {
     setError(null)
     setSuccess(null)
     try {
-      const apiBaseUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
+      const apiBaseUrl = import.meta.env.VITE_API_URL || '/api'
       const token = localStorage.getItem('token')
       
       const response = await fetch(`${apiBaseUrl}/dataexport/parquet`, {
@@ -1334,7 +1334,7 @@ export function Dashboard() {
                         <div className="info-content">
                           <h3>API Endpoint</h3>
                           <p style={{ fontSize: '13px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                            {import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'http://localhost:8080')}
+                            {import.meta.env.VITE_API_URL || '/api'}
                           </p>
                         </div>
                       </div>
