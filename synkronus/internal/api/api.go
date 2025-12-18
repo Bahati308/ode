@@ -147,6 +147,9 @@ func NewRouter(log *logger.Logger, h *handlers.Handler) http.Handler {
 		// User management routes
 		userRoutes := func(r chi.Router) {
 			// Admin-only routes
+			// Support both POST /users and POST /users/create for compatibility
+			// CLI uses POST /users, portal uses POST /users/create
+			r.With(auth.RequireRole(models.RoleAdmin)).Post("/", h.CreateUserHandler)
 			r.With(auth.RequireRole(models.RoleAdmin)).Post("/create", h.CreateUserHandler)
 			r.With(auth.RequireRole(models.RoleAdmin)).Delete("/delete/{username}", h.DeleteUserHandler)
 			r.With(auth.RequireRole(models.RoleAdmin)).Post("/reset-password", h.ResetPasswordHandler)

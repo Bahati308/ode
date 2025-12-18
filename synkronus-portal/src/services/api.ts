@@ -116,7 +116,8 @@ export const api = {
 
   // User management endpoints
   async createUser(data: { username: string; password: string; role: string }): Promise<{ username: string; role: string; createdAt: string }> {
-    return request<{ username: string; role: string; createdAt: string }>('/users/create', {
+    // Use /users (not /users/create) to match CLI and demo server
+    return request<{ username: string; role: string; createdAt: string }>('/users', {
       method: 'POST',
       body: JSON.stringify(data),
     })
