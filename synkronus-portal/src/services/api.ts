@@ -6,8 +6,10 @@ const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL
   }
-  // Use proxy in development, direct URL in production
-  return import.meta.env.DEV ? '/api' : 'http://localhost:8080'
+  // Use /api proxy in both development and production
+  // In development: Vite dev server proxies /api to backend
+  // In production: Nginx proxies /api to http://demo.synkronus.cloud
+  return '/api'
 }
 
 const API_BASE_URL = getApiBaseUrl()
